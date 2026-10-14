@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Give your coding agent a visual culture: search curated real-world data visualizations before designing a chart.",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "pluginRoot": "./plugins"
   },
   "plugins": [
     {
       "name": "dataviz-inspiration",
       "source": "./plugins/dataviz-inspiration",
-      "description": "Find curated real-world data visualizations to draw inspiration from before designing a chart, map or dashboard. Searches the dataviz-inspiration.com catalog by Yan Holtz (CC BY 4.0)."
+      "description": "Find curated real-world data visualizations to draw inspiration from before designing a chart, map or dashboard. Searches dataviz-inspiration.com (Yan Holtz, CC BY 4.0) and Dataviz Index (WeDoData) as one catalog, with method references (From Data to Viz, Insee, icem7)."
     }
   ]
 }

@@ -1,11 +1,17 @@
 {
   "name": "dataviz-inspiration",
-  "description": "Find curated real-world data visualizations to draw inspiration from before designing a chart, map or dashboard. Searches the dataviz-inspiration.com catalog by Yan Holtz (CC BY 4.0).",
-  "version": "0.1.0",
+  "description": "Find curated real-world data visualizations to draw inspiration from before designing a chart, map or dashboard. Searches dataviz-inspiration.com (Yan Holtz, CC BY 4.0) and Dataviz Index (WeDoData) as one catalog, with method references (From Data to Viz, Insee, icem7).",
+  "version": "0.2.0",
   "author": {
     "name": "Joël Gombin"
   },
   "homepage": "https://www.dataviz-inspiration.com",
   "license": "MIT",
-  "keywords": ["dataviz", "data visualization", "charts", "inspiration", "design"]
+  "keywords": [
+    "dataviz",
+    "data visualization",
+    "charts",
+    "inspiration",
+    "design"
+  ]
 }

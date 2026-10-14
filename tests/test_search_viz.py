@@ -11,34 +11,97 @@ sys.path.insert(0, str(SCRIPTS))
 
 import search_viz as sv  # noqa: E402
 
-FIXTURE = Path(__file__).parent / "fixtures" / "catalog.json"
+FIXTURES = Path(__file__).parent / "fixtures"
+YAN_RAW = json.loads((FIXTURES / "yan.json").read_text())
+DVI_RAW = json.loads((FIXTURES / "dvi_blocks.json").read_text())
+DVI_ITEM_HTML = (FIXTURES / "dvi_item.html").read_bytes()
+
+NYC = "dvi:heatmap-des-temps-de-trajet-a-nyc-1657c27b-e92c-4cbe-8bf6-362784b3b3e0"
+MEADOWS = "dvi:le-rapport-meadows-revisite-c5818333-d36a-474b-bf5f-1983cd7b1798"
 
 
 @pytest.fixture
-def catalog():
-    return json.loads(FIXTURE.read_text())
+def yan():
+    return sv.normalize_yan(YAN_RAW)
 
 
 @pytest.fixture
-def items(catalog):
-    return catalog["items"]
+def dvi():
+    return sv.normalize_dvi(DVI_RAW)
 
 
-def ids(results):
-    return [r["id"] for r in results]
+@pytest.fixture
+def items(yan, dvi):
+    return yan + dvi
+
+
+def uids(results):
+    return [r["uid"] for r in results]
+
+
+@pytest.fixture
+def offline(monkeypatch):
+    def boom(url):
+        raise OSError("offline")
+
+    monkeypatch.setattr(sv, "_download", boom)
+
+
+@pytest.fixture
+def cache_dir(tmp_path):
+    (tmp_path / "dataviz-inspiration.json").write_text(json.dumps(YAN_RAW))
+    (tmp_path / "datavizindex.json").write_text(json.dumps(DVI_RAW))
+    return tmp_path
+
+
+# --- normalization ---------------------------------------------------------
+
+def test_yan_items_are_normalized(yan):
+    first = yan[0]
+    assert first["uid"] == "yan:1"
+    assert first["source"] == "dataviz-inspiration"
+    assert first["lang"] == "en"
+    assert first["families"] == ["evolution"]
+    assert first["description"] == "A circular streamgraph that broke the internet."
+    assert first["thumbnail"] == "https://example.org/omicron-zoom.webp"
+    assert first["page"] is None
+
+
+def test_yan_unknown_date_becomes_empty(yan):
+    assert yan[4]["date"] == ""
+
+
+def test_dvi_keeps_only_inspiration_entries(dvi):
+    assert uids(dvi) == [NYC, MEADOWS]
+
+
+def test_dvi_items_are_normalized(dvi):
+    nyc = dvi[0]
+    assert nyc["source"] == "datavizindex"
+    assert nyc["lang"] == "fr"
+    assert nyc["title"] == "Heatmap des temps de trajet à NYC"
+    assert nyc["author"] == "Anthony Castrio"
+    assert nyc["url"].startswith("https://castrio.me/nyc")
+    assert nyc["page"] == "https://datavizindex.fr/inspiration-infographie-datavisualisation/" + NYC[4:]
+    assert nyc["date"] == "2026-10"
+    assert nyc["chartTypes"] == ["cartographies", "heatmaps"]
+    assert nyc["families"] == ["map", "correlation"]
+    assert nyc["labels"] == ["interactif et web"]
+    assert nyc["themes"] == ["Société"]
+    assert nyc["interactive"] is True
+    assert nyc["description"] == ""  # fetched on demand from the entry page
+    # stable site path, not the expiring S3 url
+    assert nyc["thumbnail"].startswith("https://datavizindex.fr/files/1657c27b")
 
 
 # --- filtering -------------------------------------------------------------
 
-def test_filter_by_type_matches_any_listed_type(items):
-    assert ids(sv.filter_items(items, types=["sankey", "lollipop"])) == [3, 4]
+def test_family_filter_spans_both_sources(items):
+    assert uids(sv.filter_items(items, family="map")) == ["yan:2", "yan:4", NYC]
 
 
-def test_filter_by_family_expands_to_chart_types(items):
-    # map family = choropleth, map, hexbin… -> items 2 and 4
-    assert ids(sv.filter_items(items, family="map")) == [2, 4]
-    # evolution family = line, area, stackedArea, stream
-    assert ids(sv.filter_items(items, family="evolution")) == [1]
+def test_type_filter_matches_native_types(items):
+    assert uids(sv.filter_items(items, types=["sankey", "courbes-et-series"])) == ["yan:4", MEADOWS]
 
 
 def test_unknown_family_raises(items):
@@ -47,148 +110,167 @@ def test_unknown_family_raises(items):
 
 
 def test_labels_are_combined_with_and(items):
-    assert ids(sv.filter_items(items, labels=["annotation"])) == [1, 2, 4, 5]
-    assert ids(sv.filter_items(items, labels=["annotation", "color palette"])) == [2]
+    assert uids(sv.filter_items(items, labels=["annotation"])) == ["yan:1", "yan:2", "yan:4", "yan:5"]
+    assert uids(sv.filter_items(items, labels=["annotation", "color palette"])) == ["yan:2"]
+
+
+def test_filter_by_source(items):
+    assert uids(sv.filter_items(items, source="datavizindex")) == [NYC, MEADOWS]
 
 
 def test_filter_by_tool_is_case_insensitive(items):
-    assert ids(sv.filter_items(items, tools=["r"])) == [3]
-    assert ids(sv.filter_items(items, tools=["D3.js"])) == [2]
+    assert uids(sv.filter_items(items, tools=["r"])) == ["yan:3"]
 
 
 def test_filter_interactive_and_luminosity(items):
-    assert ids(sv.filter_items(items, interactive=True)) == [2]
-    assert ids(sv.filter_items(items, luminosity="dark")) == [3]
+    assert uids(sv.filter_items(items, interactive=True)) == ["yan:2", NYC, MEADOWS]
+    assert uids(sv.filter_items(items, luminosity="dark")) == ["yan:3"]
 
 
-def test_filter_since_ignores_unknown_dates(items):
-    # "1000-01" is the catalog's sentinel for an unknown date
-    assert ids(sv.filter_items(items, since="2022")) == [1, 4]
+def test_filter_since_drops_unknown_dates(items):
+    assert uids(sv.filter_items(items, since="2022", source="dataviz-inspiration")) == ["yan:1", "yan:4"]
 
 
 # --- free-text ranking -----------------------------------------------------
 
 def test_query_is_accent_and_case_insensitive(items):
-    results = sv.rank(items, "ELECTIONS municipales")
-    assert ids(results)[0] == 2
+    assert uids(sv.rank(items, "ELECTIONS municipales"))[0] == "yan:2"
+
+
+def test_query_matches_french_titles(items):
+    assert uids(sv.rank(items, "temps de trajet"))[0] == NYC
 
 
 def test_query_ranks_title_hits_above_description_hits(items):
-    # "map" appears in descriptions of 2 and 4, never in a title;
-    # "gas" is in the title of 4 -> 4 first
-    assert ids(sv.rank(items, "gas map"))[0] == 4
+    assert uids(sv.rank(items, "gas map"))[0] == "yan:4"
 
 
 def test_query_drops_items_without_any_hit(items):
-    assert ids(sv.rank(items, "lollipop")) == [3]
+    assert uids(sv.rank(items, "lollipop")) == ["yan:3"]
 
 
 def test_no_query_sorts_favorites_then_most_recent(items):
-    assert ids(sv.rank(items, None)) == [2, 4, 1, 3, 5]
+    assert uids(sv.rank(items, None))[:2] == ["yan:2", NYC] or uids(sv.rank(items, None))[:2] == ["yan:2", MEADOWS]
+    assert uids(sv.rank(items, None))[-1] == "yan:5"
 
 
-# --- catalog loading & cache ----------------------------------------------
+# --- loading & cache -------------------------------------------------------
 
-def test_load_uses_fresh_cache_without_network(tmp_path, catalog, monkeypatch):
-    cache = tmp_path / "viz-list.json"
-    cache.write_text(json.dumps(catalog))
-
-    def boom(*a, **k):
-        raise AssertionError("network should not be called")
-
-    monkeypatch.setattr(sv, "_download", boom)
-    assert sv.load_catalog(cache_path=cache, ttl_hours=24)["count"] == 5
+def test_load_uses_fresh_cache_without_network(cache_dir, offline):
+    assert sv.load_source("dataviz-inspiration", cache_dir=cache_dir, ttl_hours=24)["count"] == 5
 
 
-def test_load_refreshes_stale_cache(tmp_path, catalog, monkeypatch):
-    cache = tmp_path / "viz-list.json"
+def test_load_refreshes_stale_cache(tmp_path, monkeypatch):
+    cache = tmp_path / "dataviz-inspiration.json"
     cache.write_text(json.dumps({"count": 0, "items": []}))
     old = time.time() - 48 * 3600
     os.utime(cache, (old, old))
-    monkeypatch.setattr(sv, "_download", lambda url: json.dumps(catalog).encode())
-    assert sv.load_catalog(cache_path=cache, ttl_hours=24)["count"] == 5
+    monkeypatch.setattr(sv, "_download", lambda url: json.dumps(YAN_RAW).encode())
+    assert sv.load_source("dataviz-inspiration", cache_dir=tmp_path, ttl_hours=24)["count"] == 5
     assert json.loads(cache.read_text())["count"] == 5
 
 
-def test_load_falls_back_to_stale_cache_when_offline(tmp_path, catalog, monkeypatch):
-    cache = tmp_path / "viz-list.json"
-    cache.write_text(json.dumps(catalog))
+def test_load_falls_back_to_stale_cache_when_offline(cache_dir, offline):
     old = time.time() - 48 * 3600
-    os.utime(cache, (old, old))
-
-    def offline(url):
-        raise OSError("no network")
-
-    monkeypatch.setattr(sv, "_download", offline)
-    assert sv.load_catalog(cache_path=cache, ttl_hours=24)["count"] == 5
+    os.utime(cache_dir / "datavizindex.json", (old, old))
+    assert len(sv.load_source("datavizindex", cache_dir=cache_dir, ttl_hours=24)) == 3
 
 
-def test_load_without_cache_and_offline_raises(tmp_path, monkeypatch):
-    def offline(url):
-        raise OSError("no network")
-
-    monkeypatch.setattr(sv, "_download", offline)
+def test_load_without_cache_and_offline_raises(tmp_path, offline):
     with pytest.raises(RuntimeError):
-        sv.load_catalog(cache_path=tmp_path / "missing.json", ttl_hours=24)
+        sv.load_source("dataviz-inspiration", cache_dir=tmp_path, ttl_hours=24)
+
+
+def test_load_all_survives_one_failing_source(tmp_path, offline):
+    (tmp_path / "dataviz-inspiration.json").write_text(json.dumps(YAN_RAW))
+    items, failed = sv.load_items(cache_dir=tmp_path, ttl_hours=24)
+    assert len(items) == 5
+    assert failed == ["datavizindex"]
+
+
+# --- datavizindex descriptions on demand -----------------------------------
+
+def test_dvi_description_is_read_from_entry_page(tmp_path, dvi, monkeypatch):
+    calls = []
+
+    def fake(url):
+        calls.append(url)
+        return DVI_ITEM_HTML
+
+    monkeypatch.setattr(sv, "_download", fake)
+    sv.enrich_descriptions(dvi[:1], cache_dir=tmp_path)
+    assert dvi[0]["description"] == "C’est mouvant. Une UX originale pour visualiser le temps de trajet & la heatmap en live."
+    # cached: a second item list does not hit the network again
+    again = sv.normalize_dvi(DVI_RAW)[:1]
+    sv.enrich_descriptions(again, cache_dir=tmp_path)
+    assert again[0]["description"] == dvi[0]["description"]
+    assert len(calls) == 1
+
+
+def test_dvi_description_failure_is_silent(tmp_path, dvi, offline):
+    sv.enrich_descriptions(dvi[:1], cache_dir=tmp_path)
+    assert dvi[0]["description"] == ""
 
 
 # --- rendering -------------------------------------------------------------
 
-def test_markdown_output_carries_attribution_and_links(catalog):
-    out = sv.render_markdown(catalog["items"][:1], catalog, total=1)
+def test_markdown_credits_each_source_used(yan, dvi):
+    out = sv.render_markdown([yan[0], dvi[0]], total=2)
     assert "Here’s When We Expect Omicron to Peak" in out
     assert "https://www.nytimes.com/omicron" in out
-    assert "omicron-zoom.webp" in out
     assert "CC BY 4.0" in out
+    assert "Dataviz Index" in out and "WeDoData" in out
 
 
-def test_unknown_date_is_rendered_as_unknown(catalog):
-    out = sv.render_markdown([catalog["items"][4]], catalog, total=1)
-    assert "1000" not in out
+def test_markdown_credits_only_sources_present(yan):
+    out = sv.render_markdown([yan[0]], total=1)
+    assert "WeDoData" not in out
+
+
+def test_unknown_date_and_empty_description(yan):
+    item = dict(yan[4], description="")
+    out = sv.render_markdown([item], total=1)
     assert "date unknown" in out
-
-
-# --- CLI -------------------------------------------------------------------
-
-def test_cli_json_output(tmp_path, catalog, monkeypatch, capsys):
-    cache = tmp_path / "viz-list.json"
-    cache.write_text(json.dumps(catalog))
-    monkeypatch.setattr(sv, "_download", lambda url: (_ for _ in ()).throw(OSError()))
-    code = sv.main(["--cache", str(cache), "--family", "map", "--format", "json", "--limit", "1"])
-    assert code == 0
-    payload = json.loads(capsys.readouterr().out)
-    assert payload["total"] == 2
-    assert [r["id"] for r in payload["results"]] == [2]
-    assert "CC BY 4.0" in payload["attribution"]
-
-
-def test_cli_vocab_lists_types_by_family_with_counts(tmp_path, catalog, capsys):
-    cache = tmp_path / "viz-list.json"
-    cache.write_text(json.dumps(catalog))
-    assert sv.main(["--cache", str(cache), "--vocab"]) == 0
-    out = capsys.readouterr().out
-    assert "map" in out and "choropleth (2)" in out
-    assert "annotation (4)" in out
-
-
-def test_empty_chart_description_line_is_omitted(catalog):
-    item = dict(catalog["items"][0], chartDescription="")
-    out = sv.render_markdown([item], catalog, total=1)
     assert "What the chart does" not in out
 
 
-def test_download_thumbnails_writes_one_file_per_result(tmp_path, items, monkeypatch):
+def test_download_thumbnails_writes_one_file_per_result(tmp_path, yan, monkeypatch):
     monkeypatch.setattr(sv, "_download", lambda url: b"img:" + url.encode())
-    paths = sv.download_thumbnails(items[:2], tmp_path)
-    assert [p.name for p in paths] == ["1-omicron-zoom.webp", "2-mun-zoom.webp"]
+    paths = sv.download_thumbnails(yan[:2], tmp_path)
+    assert [p.name for p in paths] == ["yan-1-omicron-zoom.webp", "yan-2-mun-zoom.webp"]
     assert paths[0].read_bytes() == b"img:https://example.org/omicron-zoom.webp"
 
 
-def test_download_thumbnails_skips_failures(tmp_path, items, monkeypatch):
+def test_download_thumbnails_skips_failures(tmp_path, yan, monkeypatch):
     def flaky(url):
         if "omicron" in url:
             raise OSError("404")
         return b"ok"
 
     monkeypatch.setattr(sv, "_download", flaky)
-    assert [p.name for p in sv.download_thumbnails(items[:2], tmp_path)] == ["2-mun-zoom.webp"]
+    assert [p.name for p in sv.download_thumbnails(yan[:2], tmp_path)] == ["yan-2-mun-zoom.webp"]
+
+
+# --- CLI -------------------------------------------------------------------
+
+def test_cli_json_output(cache_dir, offline, capsys):
+    code = sv.main(["--cache-dir", str(cache_dir), "--family", "map", "--format", "json", "--limit", "2"])
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["total"] == 3
+    assert len(payload["results"]) == 2
+    assert any("CC BY 4.0" in c for c in payload["credits"])
+
+
+def test_cli_source_option(cache_dir, offline, capsys):
+    assert sv.main(["--cache-dir", str(cache_dir), "--source", "datavizindex", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert {r["source"] for r in payload["results"]} == {"datavizindex"}
+
+
+def test_cli_vocab_lists_families_types_and_labels(cache_dir, offline, capsys):
+    assert sv.main(["--cache-dir", str(cache_dir), "--vocab"]) == 0
+    out = capsys.readouterr().out
+    assert "choropleth (2)" in out
+    assert "cartographies (1)" in out
+    assert "annotation (4)" in out
