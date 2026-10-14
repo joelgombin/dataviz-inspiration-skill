@@ -24,6 +24,16 @@ In Claude Code:
 Or copy `plugins/dataviz-inspiration/skills/dataviz-inspiration/` into `~/.claude/skills/`
 (or into any agent that reads `SKILL.md` folders).
 
+### Why a hook
+
+Skills are picked from their description, and an agent busy fetching data tends to jump straight
+to plotting code without loading any skill. So the plugin ships a `PreToolUse` hook: when the agent
+is about to write chart/map-drawing code (matplotlib, geopandas, plotly, ggplot2, d3, Vega…) and
+has not loaded the skill in the session, the call is denied **once**, with a reason asking it to
+load `dataviz-inspiration` first. A retry goes through, so it never locks anyone out. Opt out with
+`DATAVIZ_INSPIRATION_HOOK=off`. The hook only comes with the plugin install, not with a bare copy
+of the skill folder.
+
 Requirements: Python 3.9+, standard library only, and network access to the galleries
 (cached for 24 h in `~/.cache/dataviz-inspiration/`; a stale cache is used offline).
 
