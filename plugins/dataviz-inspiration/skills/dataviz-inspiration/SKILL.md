@@ -75,7 +75,9 @@ says what the designer did; the image shows how dense, how annotated, how colore
 ### 4. Present the references, then design
 
 For each reference you keep, give the user:
-- title, author, link to the original (and to the gallery entry);
+- title and author;
+- **two links, always**: the original work (`Original`) and the gallery page where it was found
+  (`Found via …`). The galleries did the curation: sending readers back to them is the point;
 - **the specific idea to borrow** (e.g. "annotations placed directly on the peaks instead of a
   legend", "bivariate palette with a 3×3 key", "small multiples sorted by slope");
 - why it fits this data and this audience.
@@ -83,16 +85,31 @@ For each reference you keep, give the user:
 Then propose the design, saying which idea comes from which reference. Adapt the ideas — never
 present a copy of someone else's chart as original work.
 
-End with a credit line for each gallery you used, e.g.:
+For example:
 
-> References from dataviz-inspiration.com by Yan Holtz (CC BY 4.0) and Dataviz Index by WeDoData.
+> **South Gaza's services and a doubling of population** — Bloomberg ·
+> [original](https://www.bloomberg.com/graphics/2023-israel-gaza-evacuation-hospital-access/) ·
+> found via [dataviz-inspiration.com](https://www.dataviz-inspiration.com/choropleth)
+> → borrow: a bivariate palette with a 2D key to cross two variables on one map, plus a
+> before/after toggle to show the shift.
+
+End with a linked credit line for each gallery you used:
+
+> References found via [dataviz-inspiration.com](https://www.dataviz-inspiration.com) (Yan Holtz,
+> CC BY 4.0) and [Dataviz Index](https://datavizindex.fr) (WeDoData).
+
+If the deliverable itself has a sources, notes or colophon area (report, notebook, web page,
+slide notes), put the same references and credit line there too.
 
 ## Rules
 
 - **Images are not reusable.** Thumbnails are screenshots of work by their authors. Look at them;
   never embed, ship or redistribute them.
-- **Credit and link.** Yan Holtz's catalog data is CC BY 4.0: credit it. Dataviz Index comments
-  are WeDoData's editorial text: paraphrase and link, do not republish them.
+- **Always cite and link back.** Every reference you mention carries its original link and its
+  gallery link, and every answer that used the galleries ends with the linked credit line. No
+  reference without its links, ever.
+- Yan Holtz's catalog data is CC BY 4.0: credit it. Dataviz Index comments are WeDoData's
+  editorial text: paraphrase them and link to the entry, do not republish them.
 - If no source can be fetched and no cache exists, say so and carry on with your own judgment —
   do not invent references.
 - Some entries have an empty description: rely on the context and the thumbnail.

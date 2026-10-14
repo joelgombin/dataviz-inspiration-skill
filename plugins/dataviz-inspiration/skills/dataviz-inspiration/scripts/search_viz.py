@@ -29,15 +29,20 @@ DEFAULT_CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"
 
 SOURCES: dict[str, dict[str, str]] = {
     "dataviz-inspiration": {
+        "name": "dataviz-inspiration.com",
+        "home": "https://www.dataviz-inspiration.com",
         "url": "https://www.dataviz-inspiration.com/viz-list.json",
-        "credit": "dataviz-inspiration.com by Yan Holtz — catalog data licensed under CC BY 4.0",
+        "credit": "by Yan Holtz — catalog data licensed under CC BY 4.0",
     },
     "datavizindex": {
+        "name": "Dataviz Index",
+        "home": "https://datavizindex.fr",
         "url": "https://datavizindex.fr/api/blocks",
-        "credit": "Dataviz Index (datavizindex.fr) by WeDoData — selection and descriptions © WeDoData; link, do not republish",
+        "credit": "by WeDoData — selection and descriptions © WeDoData; link, do not republish",
     },
 }
-DVI_SITE = "https://datavizindex.fr"
+YAN_SITE = SOURCES["dataviz-inspiration"]["home"]
+DVI_SITE = SOURCES["datavizindex"]["home"]
 DVI_PAGE = DVI_SITE + "/inspiration-infographie-datavisualisation/"
 YAN_UNKNOWN_DATE = "1000"  # dataviz-inspiration's sentinel for "date unknown"
 
@@ -66,6 +71,7 @@ DVI_FAMILIES: dict[str, str] = {
     "reseaux-et-graphes-relationnels": "flow",
     "diagrammes-de-flux-et-sankey": "flow",
 }
+YAN_TYPE_PAGES = {t for types in FAMILIES.values() for t in types}  # types with a page on the site
 TYPE_TO_FAMILY = {t: fam for fam, types in FAMILIES.items() for t in types} | DVI_FAMILIES
 
 # Field weights for free-text ranking.
@@ -111,7 +117,7 @@ def load_source(name: str, cache_dir: Path = DEFAULT_CACHE_DIR, ttl_hours: float
 
 # --- normalization ---------------------------------------------------------
 # Common schema: uid, source, lang, title, author, date (YYYY-MM or ""), url (original work),
-# page (entry page on the gallery, if any), chartTypes, families, labels, themes, tools,
+# page (where the gallery lists it), via (gallery name + home), chartTypes, families, labels, themes, tools,
 # interactive (bool or None), luminosity, favorite, description, context, thumbnail.
 
 def _families(types: Iterable[str]) -> list[str]:
@@ -121,6 +127,10 @@ def _families(types: Iterable[str]) -> list[str]:
         if fam and fam not in out:
             out.append(fam)
     return out
+
+
+def _via(source: str) -> dict[str, str]:
+    return {"name": SOURCES[source]["name"], "url": SOURCES[source]["home"]}
 
 
 def normalize_yan(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -136,7 +146,9 @@ def normalize_yan(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "author": it.get("author") or "",
             "date": "" if date.startswith(YAN_UNKNOWN_DATE) else date[:7],
             "url": it.get("url") or "",
-            "page": None,
+            # no per-viz page on the site: the chart-type page that lists it
+            "page": next((f"{YAN_SITE}/{t}" for t in types if t in YAN_TYPE_PAGES), YAN_SITE),
+            "via": _via("dataviz-inspiration"),
             "chartTypes": types,
             "families": _families(types),
             "labels": it.get("labels") or [],
@@ -170,6 +182,7 @@ def normalize_dvi(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "date": (b.get("publication_date") or b.get("created_time") or "")[:7],
             "url": b.get("source_url") or DVI_PAGE + b["slug"],
             "page": DVI_PAGE + b["slug"],
+            "via": _via("datavizindex"),
             "chartTypes": types,
             "families": _families(types),
             "labels": formats,
@@ -212,7 +225,7 @@ def _dvi_description(page_html: str) -> str:
 
 def enrich_descriptions(items: list[dict[str, Any]], cache_dir: Path = DEFAULT_CACHE_DIR) -> None:
     """Fill the description of Dataviz Index items from their entry page (cached)."""
-    todo = [it for it in items if it["source"] == "datavizindex" and not it["description"] and it["page"]]
+    todo = [it for it in items if it["source"] == "datavizindex" and not it["description"]]
     if not todo:
         return
     cache = Path(cache_dir) / "datavizindex-descriptions.json"
@@ -339,7 +352,7 @@ def download_thumbnails(results: list[dict[str, Any]], dest: Path) -> list[Path]
 
 def credits_for(results: list[dict[str, Any]]) -> list[str]:
     used = {it["source"] for it in results}
-    return [SOURCES[name]["credit"] for name in SOURCES if name in used]
+    return [f"[{SOURCES[n]['name']}]({SOURCES[n]['home']}) {SOURCES[n]['credit']}" for n in SOURCES if n in used]
 
 
 def render_markdown(results: list[dict[str, Any]], total: int) -> str:
@@ -347,8 +360,7 @@ def render_markdown(results: list[dict[str, Any]], total: int) -> str:
     for it in results:
         lines.append(f"## [{it['uid']}] {it['title']} — {it['author'] or '?'} ({it['date'] or 'date unknown'})")
         lines.append(f"- Original: {it['url']}")
-        if it["page"] and it["page"] != it["url"]:
-            lines.append(f"- Gallery entry: {it['page']}")
+        lines.append(f"- Found via {it['via']['name']}: {it['page']}")
         meta = f"- Source: {it['source']} ({it['lang']}) | Types: {', '.join(it['chartTypes'])}"
         if it["families"]:
             meta += f" [{', '.join(it['families'])}]"
@@ -369,7 +381,7 @@ def render_markdown(results: list[dict[str, Any]], total: int) -> str:
     for credit in credits_for(results):
         lines.append(f"_Source: {credit}._")
     if results:
-        lines.append("_Images © their respective authors._")
+        lines.append("_Images © their respective authors. Cite every reference with both links: the original and the gallery page._")
     return "\n".join(lines)
 
 

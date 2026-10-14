@@ -64,7 +64,14 @@ def test_yan_items_are_normalized(yan):
     assert first["families"] == ["evolution"]
     assert first["description"] == "A circular streamgraph that broke the internet."
     assert first["thumbnail"] == "https://example.org/omicron-zoom.webp"
-    assert first["page"] is None
+    # no per-viz page on the site: link to the chart-type page where it is listed
+    assert first["page"] == "https://www.dataviz-inspiration.com/stream"
+    assert first["via"] == {"name": "dataviz-inspiration.com", "url": "https://www.dataviz-inspiration.com"}
+
+
+def test_yan_page_falls_back_to_homepage_for_types_without_a_page():
+    payload = {"items": [dict(YAN_RAW["items"][0], chartTypes=["waffle"])]}
+    assert sv.normalize_yan(payload)[0]["page"] == "https://www.dataviz-inspiration.com"
 
 
 def test_yan_unknown_date_becomes_empty(yan):
@@ -83,6 +90,7 @@ def test_dvi_items_are_normalized(dvi):
     assert nyc["author"] == "Anthony Castrio"
     assert nyc["url"].startswith("https://castrio.me/nyc")
     assert nyc["page"] == "https://datavizindex.fr/inspiration-infographie-datavisualisation/" + NYC[4:]
+    assert nyc["via"] == {"name": "Dataviz Index", "url": "https://datavizindex.fr"}
     assert nyc["date"] == "2026-10"
     assert nyc["chartTypes"] == ["cartographies", "heatmaps"]
     assert nyc["families"] == ["map", "correlation"]
@@ -222,6 +230,15 @@ def test_markdown_credits_each_source_used(yan, dvi):
     assert "Dataviz Index" in out and "WeDoData" in out
 
 
+def test_markdown_links_every_result_to_its_gallery(yan, dvi):
+    out = sv.render_markdown([yan[0], dvi[0]], total=2)
+    assert "- Found via dataviz-inspiration.com: https://www.dataviz-inspiration.com/stream" in out
+    assert "- Found via Dataviz Index: https://datavizindex.fr/inspiration-infographie-datavisualisation/" in out
+    # footer credits link to the galleries' home pages
+    assert "[dataviz-inspiration.com](https://www.dataviz-inspiration.com)" in out
+    assert "[Dataviz Index](https://datavizindex.fr)" in out
+
+
 def test_markdown_credits_only_sources_present(yan):
     out = sv.render_markdown([yan[0]], total=1)
     assert "WeDoData" not in out
@@ -260,6 +277,7 @@ def test_cli_json_output(cache_dir, offline, capsys):
     assert payload["total"] == 3
     assert len(payload["results"]) == 2
     assert any("CC BY 4.0" in c for c in payload["credits"])
+    assert all(r["via"]["url"].startswith("https://") and r["page"] for r in payload["results"])
 
 
 def test_cli_source_option(cache_dir, offline, capsys):

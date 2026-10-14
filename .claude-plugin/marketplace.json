@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Give your coding agent a visual culture: search curated real-world data visualizations before designing a chart.",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "pluginRoot": "./plugins"
   },
   "plugins": [
