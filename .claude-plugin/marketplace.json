@@ -4,15 +4,15 @@
     "name": "Joël Gombin"
   },
   "metadata": {
-    "description": "Give your coding agent a visual culture: search curated real-world data visualizations before designing a chart.",
-    "version": "0.2.1",
+    "description": "Give your coding agent a visual culture: before drawing any chart or map, search curated dataviz galleries (dataviz-inspiration.com by Yan Holtz, Dataviz Index by WeDoData) and cite the references it borrows from.",
+    "version": "0.2.2",
     "pluginRoot": "./plugins"
   },
   "plugins": [
     {
       "name": "dataviz-inspiration",
       "source": "./plugins/dataviz-inspiration",
-      "description": "Find curated real-world data visualizations to draw inspiration from before designing a chart, map or dashboard. Searches dataviz-inspiration.com (Yan Holtz, CC BY 4.0) and Dataviz Index (WeDoData) as one catalog, with method references (From Data to Viz, Insee, icem7)."
+      "description": "Give your coding agent a visual culture: before drawing any chart or map, search curated dataviz galleries (dataviz-inspiration.com by Yan Holtz, Dataviz Index by WeDoData) and cite the references it borrows from."
     }
   ]
 }
