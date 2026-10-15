@@ -1,7 +1,7 @@
 {
   "name": "dataviz-inspiration",
   "owner": {
-    "name": "Joël Gombin"
+    "name": "Joël Gombin & Yan Holtz"
   },
   "metadata": {
     "description": "Give your coding agent a visual culture: before drawing any chart or map, search curated dataviz galleries (dataviz-inspiration.com by Yan Holtz, Dataviz Index by WeDoData) and cite the references it borrows from.",

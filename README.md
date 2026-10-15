@@ -1,5 +1,7 @@
 # dataviz-inspiration — a skill for coding agents
 
+By [Joël Gombin](https://github.com/joelgombin) and [Yan Holtz](https://www.yan-holtz.com).
+
 Ask an agent for a chart and you get something correct but generic: it has no visual culture.
 This skill gives it one. Before designing a visualization, the agent searches curated galleries of
 published visualizations as a single catalog, looks at the best matches, and tells you which idea it
@@ -78,6 +80,18 @@ python3 plugins/dataviz-inspiration/skills/dataviz-inspiration/scripts/search_vi
 python3 plugins/dataviz-inspiration/skills/dataviz-inspiration/scripts/search_viz.py --family evolution --label annotation
 python3 plugins/dataviz-inspiration/skills/dataviz-inspiration/scripts/search_viz.py --vocab
 ```
+
+## Authors
+
+- [Joël Gombin](https://github.com/joelgombin) — the skill, the multi-source search and the hook.
+- [Yan Holtz](https://www.yan-holtz.com) — co-author; curator of
+  [dataviz-inspiration.com](https://www.dataviz-inspiration.com), whose open catalog
+  ([`viz-list.json`](https://www.dataviz-inspiration.com/viz-list.json),
+  [`llms.txt`](https://www.dataviz-inspiration.com/llms.txt)) is the backbone of the skill, and
+  author of [From Data to Viz](https://www.data-to-viz.com) and the
+  [R](https://r-graph-gallery.com) and [Python](https://python-graph-gallery.com) Graph Galleries.
+
+Contributions welcome: issues and pull requests on this repository.
 
 ## Credits and licences
 
