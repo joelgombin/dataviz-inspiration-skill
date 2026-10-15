@@ -5,12 +5,31 @@ This skill gives it one. Before designing a visualization, the agent searches cu
 published visualizations as a single catalog, looks at the best matches, and tells you which idea it
 borrows from which reference:
 
-- [dataviz-inspiration.com](https://www.dataviz-inspiration.com) by Yan Holtz — 450+ projects tagged
-  by chart type and design technique, each with a short critique (English, CC BY 4.0);
-- [Dataviz Index](https://datavizindex.fr) by WeDoData — 300 picks from the *Buena Vista Data Club*
-  newsletter, tagged by type, theme and format (French);
-- plus method references to choose and check the form: From Data to Viz, the Data Visualisation
-  Catalogue, Insee's guidance and Éric Mauvière's (icem7) redesigns.
+- [dataviz-inspiration.com](https://www.dataviz-inspiration.com) by [Yan Holtz](https://www.yan-holtz.com)
+  — 450+ projects tagged by chart type and design technique, each with a short critique
+  (English, CC BY 4.0);
+- [Dataviz Index](https://datavizindex.fr) by [WeDoData](https://wedodata.fr) — 300 picks from the
+  [*Buena Vista Data Club*](https://wedodata.beehiiv.com) newsletter, tagged by type, theme and
+  format (French);
+- plus [method references](#method-references) to choose and check the form.
+
+## Method references
+
+When the right form is not obvious, the skill points the agent to:
+
+- [From Data to Viz](https://www.data-to-viz.com) (Yan Holtz & Conor Healy) — decision tree from
+  the shape of the data to chart types, and its [catalogue of caveats](https://www.data-to-viz.com/caveats.html);
+- [The Data Visualisation Catalogue](https://datavizcatalogue.com) (Severino Ribecca) — chart types
+  searchable by function;
+- Insee, [« Comment présenter nos données pour mieux communiquer ? »](https://www.insee.fr/fr/information/7722079),
+  *Courrier des statistiques* n° 10 (2023) — graphic semiology and rigour for official statistics;
+- Éric Mauvière ([icem7](https://www.icem7.fr)), [« La dataviz pour donner du sens aux données et communiquer un message »](https://minio.lab.sspcloud.fr/lgaliana/ssphub/replay/20240229-dataviz-mauviere/conf_ssphub_icem7.pdf)
+  (2024) — step-by-step redesigns of real charts;
+- [R Graph Gallery](https://r-graph-gallery.com) and [Python Graph Gallery](https://python-graph-gallery.com)
+  (Yan Holtz) — charts with their code;
+- [*ggplot2: Elegant Graphics for Data Analysis*](https://ggplot2-book.org) (3rd ed.).
+
+The full notes live in [`references/method.md`](plugins/dataviz-inspiration/skills/dataviz-inspiration/references/method.md).
 
 ## Install
 
@@ -39,8 +58,8 @@ Requirements: Python 3.9+, standard library only, and network access to the gall
 
 ## Use
 
-Nothing to call: the skill triggers when the agent is about to design a non-trivial chart, or when
-you ask for ideas or references. You can also query the catalog yourself:
+Nothing to call: the skill triggers when the agent is about to draw a chart or a map (helped by
+the hook), or when you ask for ideas or references. You can also query the catalog yourself:
 
 ```bash
 python3 plugins/dataviz-inspiration/skills/dataviz-inspiration/scripts/search_viz.py "election élection turnout participation" --family map
@@ -50,12 +69,12 @@ python3 plugins/dataviz-inspiration/skills/dataviz-inspiration/scripts/search_vi
 
 ## Credits and licences
 
-- [dataviz-inspiration.com](https://www.dataviz-inspiration.com) by Yan Holtz: catalog data
+- [dataviz-inspiration.com](https://www.dataviz-inspiration.com) by [Yan Holtz](https://www.yan-holtz.com): catalog data
   licensed under [CC BY 4.0](https://github.com/holtzy/dataviz-inspiration/blob/main/LICENSE).
-- [Dataviz Index](https://datavizindex.fr) by WeDoData: selection and editorial comments © WeDoData.
+- [Dataviz Index](https://datavizindex.fr) by [WeDoData](https://wedodata.fr): selection and editorial comments © WeDoData.
   The agent reads them like a visitor would, links to them and paraphrases; it does not republish them.
 - Both galleries are read live from their public endpoints, never copied into this repository.
-- Chart families come from dataviz-inspiration's source code (MIT); their mapping onto Dataviz
+- Chart families come from [dataviz-inspiration's source code](https://github.com/holtzy/dataviz-inspiration) (MIT); their mapping onto Dataviz
   Index types is ours.
 - Images are screenshots of work by their respective authors and are covered by neither: the
   skill only lets the agent look at them, never reuse them.
