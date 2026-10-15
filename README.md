@@ -17,7 +17,7 @@ borrows from which reference:
 
 When the right form is not obvious, the skill points the agent to:
 
-- [From Data to Viz](https://www.data-to-viz.com) (Yan Holtz & Conor Healy) — decision tree from
+- [From Data to Viz](https://www.data-to-viz.com) ([Yan Holtz](https://www.yan-holtz.com) & Conor Healy) — decision tree from
   the shape of the data to chart types, and its [catalogue of caveats](https://www.data-to-viz.com/caveats.html);
 - [The Data Visualisation Catalogue](https://datavizcatalogue.com) (Severino Ribecca) — chart types
   searchable by function;
@@ -26,7 +26,7 @@ When the right form is not obvious, the skill points the agent to:
 - Éric Mauvière ([icem7](https://www.icem7.fr)), [« La dataviz pour donner du sens aux données et communiquer un message »](https://minio.lab.sspcloud.fr/lgaliana/ssphub/replay/20240229-dataviz-mauviere/conf_ssphub_icem7.pdf)
   (2024) — step-by-step redesigns of real charts;
 - [R Graph Gallery](https://r-graph-gallery.com) and [Python Graph Gallery](https://python-graph-gallery.com)
-  (Yan Holtz) — charts with their code;
+  ([Yan Holtz](https://www.yan-holtz.com)) — charts with their code;
 - [*ggplot2: Elegant Graphics for Data Analysis*](https://ggplot2-book.org) (3rd ed.).
 
 The full notes live in [`references/method.md`](plugins/dataviz-inspiration/skills/dataviz-inspiration/references/method.md).
