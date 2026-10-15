@@ -59,7 +59,19 @@ Requirements: Python 3.9+, standard library only, and network access to the gall
 ## Use
 
 Nothing to call: the skill triggers when the agent is about to draw a chart or a map (helped by
-the hook), or when you ask for ideas or references. You can also query the catalog yourself:
+the hook), or when you ask for ideas or references.
+
+To call it explicitly, type the slash command followed by what you want to show:
+
+```
+/dataviz-inspiration:dataviz-inspiration a map of turnout by municipality, with many small rural towns
+```
+
+The name is namespaced (`plugin:skill`) when installed as a plugin; with a bare copy of the skill
+folder in `~/.claude/skills/`, it is simply `/dataviz-inspiration`. You can also just ask in plain
+words: "use dataviz-inspiration to find references for this chart".
+
+You can also query the catalog yourself:
 
 ```bash
 python3 plugins/dataviz-inspiration/skills/dataviz-inspiration/scripts/search_viz.py "election élection turnout participation" --family map
